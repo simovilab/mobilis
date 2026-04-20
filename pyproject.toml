@@ -32,8 +32,8 @@ classifiers = [
 dependencies = ["rich>=13.7", "textual>=0.58"]
 
 [project.urls]
-Homepage = "https://github.com/fabianabarca/mobilis"
-Issues = "https://github.com/fabianabarca/mobilis/issues"
+Homepage = "https://github.com/simovilab/mobilis"
+Issues = "https://github.com/simovilab/mobilis/issues"
 
 [project.scripts]
 mobilis = "mobilis.cli:main"
@@ -41,3 +41,6 @@ mobilis = "mobilis.cli:main"
 [build-system]
 requires = ["uv_build>=0.9.4,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+docs = ["zensical>=0.0.33"]

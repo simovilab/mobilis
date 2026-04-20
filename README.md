@@ -8,15 +8,16 @@ leaving the terminal.
 
 It is built with:
 
-- [`rich`](https://github.com/Textualize/rich) for nicely formatted one-shot output (e.g. `mobilis info stop ABC123`).
-- [`textual`](https://github.com/Textualize/textual) for the interactive dashboard (`mobilis run`).
+- [`rich`](https://github.com/Textualize/rich) for nicely formatted one-shot output (e.g. `mobilis show stop ABC123`).
+- [`textual`](https://github.com/Textualize/textual) for the interactive dashboards (`mobilis go`, `mobilis explore`).
 - [`uv`](https://github.com/astral-sh/uv) for packaging and environment management.
 
 ## Planned commands
 
 ```
-mobilis run                     # launch the interactive TUI dashboard
-mobilis info stop ABC123        # show details for a stop by code/id
+mobilis go                      # passenger TUI: live transit info for riders
+mobilis explore                 # analyst TUI: GTFS feed stats and export
+mobilis show stop ABC123        # show details for a stop by code/id
 ```
 
 More subcommands (routes, trips, vehicles, alerts, …) will follow.

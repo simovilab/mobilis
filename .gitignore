@@ -1,3 +1,6 @@
+# Zensical stuff
+site/
+
 # Byte-compiled / cached
 __pycache__/
 *.py[cod]

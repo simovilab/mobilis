@@ -91,7 +91,7 @@ class DeparturesTable(DataTable):
 # --- App ---------------------------------------------------------------------
 
 
-class MobilisApp(App):
+class MobilisGoApp(App):
     """Placeholder dashboard app.
 
     Future versions will render live GTFS feeds: stops, routes, vehicles
@@ -143,7 +143,7 @@ class MobilisApp(App):
     """
 
     TITLE = "mobilis"
-    SUB_TITLE = "GTFS in the terminal — stub dashboard"
+    SUB_TITLE = "Passenger dashboard — stub"
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh data"),
@@ -218,6 +218,6 @@ class MobilisApp(App):
         )
 
 
-def run_dashboard() -> None:
+def run_mobilis_go() -> None:
     """Entry point used by the CLI to launch the TUI."""
-    MobilisApp().run()
+    MobilisGoApp().run()

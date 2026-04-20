@@ -1,9 +1,11 @@
 """Command-line interface for mobilis.
 
-Exposes two top-level commands:
+Exposes three top-level commands:
 
-* ``mobilis run`` — launch the Textual TUI dashboard.
-* ``mobilis info <resource> <id>`` — print information about a transit
+* ``mobilis go`` — launch the passenger-facing Textual TUI dashboard.
+* ``mobilis explore`` — launch the analyst/researcher TUI for inspecting
+  and exporting GTFS feed data.
+* ``mobilis show <resource> <id>`` — print information about a transit
   resource (currently only ``stop``) using Rich for pretty output.
 
 This is a minimal stub; real GTFS data fetching will arrive in a future
@@ -36,22 +38,35 @@ def _build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # mobilis run
+    # mobilis go — passenger-facing TUI
     subparsers.add_parser(
-        "run",
-        help="Start the TUI dashboard.",
-        description="Start the mobilis TUI dashboard (powered by Textual).",
+        "go",
+        help="Start the passenger TUI dashboard.",
+        description=(
+            "Start the mobilis passenger TUI dashboard (powered by Textual) "
+            "with live transit information for riders."
+        ),
     )
 
-    # mobilis info <resource> <id>
-    info = subparsers.add_parser(
-        "info",
+    # mobilis explore — researcher/analytics TUI
+    subparsers.add_parser(
+        "explore",
+        help="Start the GTFS explorer TUI.",
+        description=(
+            "Start the mobilis explorer TUI for analyzing and exporting "
+            "GTFS feed data (stats, tables, etc.)."
+        ),
+    )
+
+    # mobilis show <resource> <id>
+    show = subparsers.add_parser(
+        "show",
         help="Show information about a transit resource.",
         description="Show information about a transit resource.",
     )
-    info_sub = info.add_subparsers(dest="resource", required=True)
+    show_sub = show.add_subparsers(dest="resource", required=True)
 
-    stop = info_sub.add_parser(
+    stop = show_sub.add_parser(
         "stop",
         help="Show information about a stop.",
         description="Show information about a stop by stop code or id.",
@@ -65,14 +80,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "run":
-        from .tui import run_dashboard
+    if args.command == "go":
+        from .go import run_mobilis_go
 
-        run_dashboard()
+        run_mobilis_go()
         return 0
 
-    if args.command == "info" and args.resource == "stop":
-        from .info import show_stop
+    if args.command == "explore":
+        from .explore import run_mobilis_explore
+
+        run_mobilis_explore()
+        return 0
+
+    if args.command == "show" and args.resource == "stop":
+        from .show import show_stop
 
         show_stop(args.stop_id)
         return 0

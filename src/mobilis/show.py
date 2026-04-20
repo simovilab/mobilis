@@ -1,4 +1,4 @@
-"""Rich-formatted ``mobilis info`` output (stub)."""
+"""Rich-formatted ``mobilis show`` output (stub)."""
 
 from __future__ import annotations
 
