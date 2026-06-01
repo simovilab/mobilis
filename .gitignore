@@ -1,3 +1,7 @@
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
 # Zensical stuff
 site/
 
