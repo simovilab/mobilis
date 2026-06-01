@@ -4,7 +4,9 @@ version = "0.0.1"
 description = "Visualize public transportation information from GTFS feeds in the terminal."
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "Fabián Abarca Calderón", email = "ensinergia@gmail.com" }]
+authors = [
+    { name = "Intelligent Mobility Systems Laboratory", email = "simovi@ucr.ac.cr" },
+]
 requires-python = ">=3.10"
 keywords = [
     "gtfs",
@@ -29,7 +31,11 @@ classifiers = [
     "Topic :: Terminals",
     "Topic :: Utilities",
 ]
-dependencies = ["rich>=13.7", "textual>=0.58"]
+dependencies = [
+    "duckdb>=1.5.3",
+    "rich>=13.7",
+    "textual>=0.58",
+]
 
 [project.urls]
 Homepage = "https://github.com/simovilab/mobilis"
