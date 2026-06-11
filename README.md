@@ -3,13 +3,14 @@
 > **Status:** early stub. This package currently only scaffolds the CLI/TUI
 > surface; GTFS data integration has not been implemented yet.
 
-`mobilis` is a terminal-first tool for exploring public transportation information from [GTFS](https://gtfs.org/) feeds (both static schedules and real-time updates). It aims to give riders, operators and hackers a fast, keyboard-driven way to answer questions like *"when is the next bus at this stop?"* or *"which vehicles are currently running on route 42?"* — without
+`mobilis` is a terminal-first tool for exploring public transportation information from [GTFS](https://gtfs.org/) feeds (both static schedules and real-time updates). It aims to give riders, operators and hackers a fast, keyboard-driven way to answer questions like _"when is the next bus at this stop?"_ or _"which vehicles are currently running on route 42?"_ — without
 leaving the terminal.
 
 It is built with:
 
 - [`rich`](https://github.com/Textualize/rich) for nicely formatted one-shot output (e.g. `mobilis show stop ABC123`).
 - [`textual`](https://github.com/Textualize/textual) for the interactive dashboards (`mobilis go`, `mobilis explore`).
+- [`duckdb`](https://duckdb.org/) as the embedded analytics engine for fast GTFS data querying.
 - [`uv`](https://github.com/astral-sh/uv) for packaging and environment management.
 
 ## Planned commands
