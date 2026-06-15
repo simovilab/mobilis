@@ -98,49 +98,7 @@ class MobilisGoApp(App):
     and service alerts. For now everything here is mock data.
     """
 
-    CSS = """
-    Screen {
-        layout: vertical;
-    }
-
-    #body {
-        height: 1fr;
-    }
-
-    #sidebar {
-        width: 38;
-        border-right: solid $primary 50%;
-        padding: 0 1;
-    }
-
-    #content {
-        padding: 0 1;
-    }
-
-    .section-title {
-        padding: 1 0 0 0;
-        color: $accent;
-        text-style: bold;
-    }
-
-    StopsTable, DeparturesTable {
-        height: 1fr;
-    }
-
-    ProgressBar {
-        margin: 1 0;
-    }
-
-    Sparkline {
-        height: 3;
-        margin: 1 0;
-    }
-
-    RichLog {
-        height: 1fr;
-        background: $surface;
-    }
-    """
+    CSS_PATH = "styles/go.tcss"
 
     TITLE = "mobilis"
     SUB_TITLE = "Passenger dashboard — stub"
