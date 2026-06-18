@@ -13,3 +13,15 @@ with duckdb.connect("feeds.duckdb") as d:
         SELECT count(id) FROM feeds 
         WHERE data_type = 'gtfs' AND source_info.authentication_type = 0;
     """)
+    d.sql("""
+        UPDATE feeds
+        SET bbox = CASE
+            WHEN bounding_box IS NULL THEN NULL
+            ELSE ST_MakeEnvelope(
+                bounding_box.minimum_longitude,
+                bounding_box.minimum_latitude,
+                bounding_box.maximum_longitude,
+                bounding_box.maximum_latitude
+        ) 
+        END;
+        """)
