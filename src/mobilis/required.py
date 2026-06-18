@@ -1,0 +1,56 @@
+REQUIRED_FIELDS = {
+    "agency": [
+        "agency_id",
+        "agency_name",
+        "agency_url",
+        "agency_timezone",
+    ],
+    "stops": [
+        "stop_id",
+        "stop_name",
+        "stop_lat",
+        "stop_lon",
+    ],
+    "routes": [
+        "route_id",
+        "agency_id",
+        "route_type",
+    ],
+    "calendar": [
+        "service_id",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+        "start_date",
+        "end_date",
+    ],
+    "shapes": [
+        "shape_id",
+        "shape_pt_lat",
+        "shape_pt_lon",
+        "shape_pt_sequence",
+    ],
+    "trips": [
+        "route_id",
+        "service_id",
+        "trip_id",
+        "shape_id",
+        "direction_id",
+    ],
+    "stop_times": [
+        "trip_id",
+        "arrival_time",
+        "departure_time",
+        "stop_id",
+        "stop_sequence",
+    ],
+    "calendar_dates": [
+        "service_id",
+        "date",
+        "exception_type",
+    ],
+}
