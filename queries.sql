@@ -56,3 +56,64 @@ WHERE
     t.direction_id = 0 AND 
     t.trip_id = '77137007'
 ORDER BY st.stop_sequence;
+
+-- DuckDB macro to get the first departure time for a trip (the departure time is actually stored in the stop_times table as INTERVAL)
+
+CREATE OR REPLACE MACRO first_departure_time(t_id) AS (
+    SELECT arrival_time
+    FROM stop_times
+    WHERE stop_times.trip_id = t_id
+    ORDER BY stop_sequence
+    LIMIT 1
+);
+
+-- Active trips for a route today (calendar + calendar_dates exceptions)
+
+WITH 
+    base_services AS (
+        SELECT c.service_id
+        FROM calendar c
+        WHERE
+            current_date BETWEEN c.start_date AND c.end_date
+            AND CASE dayofweek(current_date)
+                WHEN 0 THEN c.sunday
+                WHEN 1 THEN c.monday
+                WHEN 2 THEN c.tuesday
+                WHEN 3 THEN c.wednesday
+                WHEN 4 THEN c.thursday
+                WHEN 5 THEN c.friday
+                WHEN 6 THEN c.saturday
+            END = 1
+    ),
+    added_services AS (
+        SELECT cd.service_id
+        FROM calendar_dates cd
+        WHERE cd.date = current_date
+            AND cd.exception_type = 1
+    ),
+    removed_services AS (
+        SELECT cd.service_id
+        FROM calendar_dates cd
+        WHERE cd.date = current_date
+            AND cd.exception_type = 2
+    ),
+    active_services AS (
+        (
+            SELECT service_id FROM base_services
+            UNION
+            SELECT service_id FROM added_services
+        )
+        EXCEPT
+        SELECT service_id FROM removed_services
+    )
+    SELECT
+        t.trip_id,
+        t.route_id,
+        t.service_id,
+        t.direction_id,
+        first_departure_time(t.trip_id) AS trip_departure_time
+    FROM trips t
+    WHERE
+        t.route_id = '39' AND direction_id = 0
+        AND t.service_id IN (SELECT service_id FROM active_services)
+    ORDER BY trip_departure_time ASC;
