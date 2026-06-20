@@ -2,7 +2,8 @@ import os
 import duckdb
 from .required import REQUIRED_FIELDS
 
-required_tables = set(REQUIRED_FIELDS)
+OPTIONAL_SERVICE_TABLES = {"calendar", "calendar_dates"}
+required_tables = set(REQUIRED_FIELDS) - OPTIONAL_SERVICE_TABLES
 feeds_path = os.path.expanduser("~/.mobilis/feeds")
 
 
@@ -16,6 +17,10 @@ def import_gtfs(feed_id: str):
         missing_tables = required_tables - actual_files
         raise ValueError(
             f"Feed {feed_id} is missing required tables: {', '.join(missing_tables)}"
+        )
+    if not (OPTIONAL_SERVICE_TABLES & actual_files):
+        raise ValueError(
+            f"Feed {feed_id} must include at least one of calendar.txt or calendar_dates.txt"
         )
 
     with duckdb.connect(f"{feed_path}/{feed_id}.duckdb") as d:
@@ -71,32 +76,44 @@ def import_gtfs(feed_id: str):
             )
 
         # Routes
-        routes_required_fields = set(REQUIRED_FIELDS["routes"])
+        routes_required_fields = set(REQUIRED_FIELDS["routes"]) - {"agency_id"}
         csv_path = os.path.join(files_path, "routes.txt")
         rows = d.execute(
             "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
             [csv_path],
         ).fetchall()
         routes_actual_fields = set(row[0] for row in rows)
-        route_name_fields = ()
-        if (
-            "route_short_name" not in routes_actual_fields
-            and "route_long_name" not in routes_actual_fields
-        ):
+        agency_rows = d.execute("SELECT agency_id FROM agency ORDER BY agency_id").fetchall()
+        if "agency_id" in routes_actual_fields:
+            agency_id_expr = "CAST(agency_id AS VARCHAR)"
+        else:
+            if len(agency_rows) != 1:
+                raise ValueError(
+                    f"Feed {feed_id} is missing agency_id in routes.txt but has {len(agency_rows)} agencies in agency.txt"
+                )
+            fallback_agency_id = agency_rows[0][0].replace("'", "''")
+            agency_id_expr = f"'{fallback_agency_id}'"
+        if "route_short_name" in routes_actual_fields:
+            route_name_expr = (
+                "COALESCE(NULLIF(CAST(route_short_name AS VARCHAR), ''), "
+                "CAST(route_id AS VARCHAR))"
+            )
+        elif "route_long_name" in routes_actual_fields:
+            route_name_expr = (
+                "COALESCE(NULLIF(CAST(route_long_name AS VARCHAR), ''), "
+                "CAST(route_id AS VARCHAR))"
+            )
+        else:
             raise ValueError(
                 f"Feed {feed_id} must have at least one of route_short_name or route_long_name in routes.txt"
             )
-        elif "route_short_name" in routes_actual_fields:
-            route_name_fields += ("route_short_name",)
-        elif "route_long_name" in routes_actual_fields:
-            route_name_fields += ("route_long_name",)
         if routes_required_fields.issubset(routes_actual_fields):
             d.sql(f"""
                 CREATE OR REPLACE TABLE routes AS
                 SELECT 
                     CAST(route_id AS VARCHAR) AS route_id,
-                    agency_id,
-                    {", ".join(route_name_fields)},
+                    {agency_id_expr} AS agency_id,
+                    {route_name_expr} AS route_short_name,
                     route_type,
                 FROM read_csv('{files_path}/routes.txt');
                 """)
@@ -107,34 +124,51 @@ def import_gtfs(feed_id: str):
             )
 
         # Calendar
-        calendar_required_fields = set(REQUIRED_FIELDS["calendar"])
-        csv_path = os.path.join(files_path, "calendar.txt")
-        rows = d.execute(
-            "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
-            [csv_path],
-        ).fetchall()
-        calendar_actual_fields = set(row[0] for row in rows)
-        if calendar_required_fields.issubset(calendar_actual_fields):
-            d.sql(f"""
-                CREATE OR REPLACE TABLE calendar AS
-                SELECT 
-                    CAST(service_id AS VARCHAR) AS service_id,
-                    monday,
-                    tuesday,
-                    wednesday,
-                    thursday,
-                    friday,
-                    saturday,
-                    sunday,
-                    CAST(strptime(CAST(start_date AS VARCHAR), '%Y%m%d') AS DATE) AS start_date,
-                    CAST(strptime(CAST(end_date AS VARCHAR), '%Y%m%d') AS DATE) AS end_date,
-                FROM read_csv('{files_path}/calendar.txt');
-                """)
+        if "calendar" in actual_files:
+            calendar_required_fields = set(REQUIRED_FIELDS["calendar"])
+            csv_path = os.path.join(files_path, "calendar.txt")
+            rows = d.execute(
+                "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
+                [csv_path],
+            ).fetchall()
+            calendar_actual_fields = set(row[0] for row in rows)
+            if calendar_required_fields.issubset(calendar_actual_fields):
+                d.sql(f"""
+                    CREATE OR REPLACE TABLE calendar AS
+                    SELECT 
+                        CAST(service_id AS VARCHAR) AS service_id,
+                        monday,
+                        tuesday,
+                        wednesday,
+                        thursday,
+                        friday,
+                        saturday,
+                        sunday,
+                        CAST(strptime(CAST(start_date AS VARCHAR), '%Y%m%d') AS DATE) AS start_date,
+                        CAST(strptime(CAST(end_date AS VARCHAR), '%Y%m%d') AS DATE) AS end_date,
+                    FROM read_csv('{files_path}/calendar.txt');
+                    """)
+            else:
+                missing_fields = calendar_required_fields - calendar_actual_fields
+                raise ValueError(
+                    f"Feed {feed_id} is missing required fields in calendar.txt: {', '.join(missing_fields)}"
+                )
         else:
-            missing_fields = calendar_required_fields - calendar_actual_fields
-            raise ValueError(
-                f"Feed {feed_id} is missing required fields in calendar.txt: {', '.join(missing_fields)}"
-            )
+            d.sql("""
+                CREATE OR REPLACE TABLE calendar AS
+                SELECT
+                    CAST(NULL AS VARCHAR) AS service_id,
+                    CAST(NULL AS INTEGER) AS monday,
+                    CAST(NULL AS INTEGER) AS tuesday,
+                    CAST(NULL AS INTEGER) AS wednesday,
+                    CAST(NULL AS INTEGER) AS thursday,
+                    CAST(NULL AS INTEGER) AS friday,
+                    CAST(NULL AS INTEGER) AS saturday,
+                    CAST(NULL AS INTEGER) AS sunday,
+                    CAST(NULL AS DATE) AS start_date,
+                    CAST(NULL AS DATE) AS end_date
+                WHERE FALSE;
+                """)
 
         # Shapes
         shapes_required_fields = set(REQUIRED_FIELDS["shapes"])
@@ -228,26 +262,36 @@ def import_gtfs(feed_id: str):
             )
 
         # Calendar Dates
-        calendar_dates_required_fields = set(REQUIRED_FIELDS["calendar_dates"])
-        csv_path = os.path.join(files_path, "calendar_dates.txt")
-        rows = d.execute(
-            "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
-            [csv_path],
-        ).fetchall()
-        calendar_dates_actual_fields = set(row[0] for row in rows)
-        if calendar_dates_required_fields.issubset(calendar_dates_actual_fields):
-            d.sql(f"""
-                CREATE OR REPLACE TABLE calendar_dates AS
-                SELECT 
-                    CAST(service_id AS VARCHAR) AS service_id,
-                    CAST(strptime(CAST(date AS VARCHAR), '%Y%m%d') AS DATE) AS date,
-                    exception_type,
-                FROM read_csv('{files_path}/calendar_dates.txt');
-                """)
+        if "calendar_dates" in actual_files:
+            calendar_dates_required_fields = set(REQUIRED_FIELDS["calendar_dates"])
+            csv_path = os.path.join(files_path, "calendar_dates.txt")
+            rows = d.execute(
+                "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
+                [csv_path],
+            ).fetchall()
+            calendar_dates_actual_fields = set(row[0] for row in rows)
+            if calendar_dates_required_fields.issubset(calendar_dates_actual_fields):
+                d.sql(f"""
+                    CREATE OR REPLACE TABLE calendar_dates AS
+                    SELECT 
+                        CAST(service_id AS VARCHAR) AS service_id,
+                        CAST(strptime(CAST(date AS VARCHAR), '%Y%m%d') AS DATE) AS date,
+                        exception_type,
+                    FROM read_csv('{files_path}/calendar_dates.txt');
+                    """)
+            else:
+                missing_fields = (
+                    calendar_dates_required_fields - calendar_dates_actual_fields
+                )
+                raise ValueError(
+                    f"Feed {feed_id} is missing required fields in calendar_dates.txt: {', '.join(missing_fields)}"
+                )
         else:
-            missing_fields = (
-                calendar_dates_required_fields - calendar_dates_actual_fields
-            )
-            raise ValueError(
-                f"Feed {feed_id} is missing required fields in calendar_dates.txt: {', '.join(missing_fields)}"
-            )
+            d.sql("""
+                CREATE OR REPLACE TABLE calendar_dates AS
+                SELECT
+                    CAST(NULL AS VARCHAR) AS service_id,
+                    CAST(NULL AS DATE) AS date,
+                    CAST(NULL AS INTEGER) AS exception_type
+                WHERE FALSE;
+                """)

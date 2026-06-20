@@ -10,8 +10,9 @@ icon: lucide/fullscreen
 mobilis go
 ```
 
-!!! warning "Status: stub"
-    The current screen renders mock data only. The layout, widgets and keybindings are in place so that real GTFS integration can be dropped in without further UI churn.
+!!! info "Status: early scaffold"
+    The command now includes a **Transit System** page that lists GTFS feeds from `src/feeds/feeds.duckdb` and can load a selected feed into `~/.mobilis/feeds/<feed_id>/`.
+    After loading, it enables the `Trips by route` and `Trips by stop` flows.
 
 ## Planned features
 

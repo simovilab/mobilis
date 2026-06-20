@@ -1,7 +1,7 @@
 # mobilis
 
-> **Status:** early stub. This package currently only scaffolds the CLI/TUI
-> surface; GTFS data integration has not been implemented yet.
+> **Status:** early scaffold. `mobilis go` now includes an initial GTFS-backed
+> TUI flow for discovering/loading a feed and browsing trips by route/stop.
 
 `mobilis` is a terminal-first tool for exploring public transportation information from [GTFS](https://gtfs.org/) feeds (both static schedules and real-time updates). It aims to give riders, operators and hackers a fast, keyboard-driven way to answer questions like _"when is the next bus at this stop?"_ or _"which vehicles are currently running on route 42?"_ — without
 leaving the terminal.
