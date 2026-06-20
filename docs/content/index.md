@@ -4,40 +4,41 @@ icon: lucide/bus
 
 # Mobilis
 
-`mobilis` is a terminal-first tool for exploring public transportation data
-from [GTFS](https://gtfs.org/) feeds — both static schedules and real-time
-updates. It targets two audiences from a single codebase:
+`mobilis` is a terminal-first tool for exploring public transportation schedules from [GTFS](https://gtfs.org/) static feeds. It lets riders, operators and developers download any feed from the global [Mobility Database](https://mobilitydatabase.org/) catalog, import it locally, and browse agencies, routes, stops and timetables — entirely from the terminal.
 
-- **Passengers and riders**, through a live dashboard that answers
-  everyday questions such as _"when is the next bus?"_ or _"is my route
-  delayed?"_.
-- **Researchers, operators and analysts**, through a feed explorer that
-  summarizes, inspects and exports GTFS datasets.
-
-!!! warning "Status: early stub"
-    Mobilis currently only scaffolds the CLI, TUIs and documentation. No real GTFS data is parsed yet — every table, metric and alert you see   in the app is mock data. These pages describe the planned feature set.
+!!! tip "v0.1 alpha"
+    The passenger TUI and feed-management CLI are fully functional.
+    GTFS feeds are downloaded on demand, imported into an embedded DuckDB database, and browsable through keyboard-driven screens.
 
 ## Commands at a glance
 
 ```bash
-mobilis go                      # passenger TUI: live transit info for riders
-mobilis explore                 # analyst TUI: GTFS feed stats and export
-mobilis show stop ABC123        # one-shot details for a stop by code/id
+# Passenger TUI
+mobilis go                  # start and choose a feed interactively
+mobilis go mdb-466          # start and load feed mdb-466 immediately
+
+# Feed management
+mobilis feeds show          # list downloaded feeds + catalog
+mobilis feeds show -d       # downloaded feeds only
+mobilis feeds show -c       # full catalog only
+mobilis feeds update mdb-466
+mobilis feeds remove mdb-466
+
+# One-shot output
+mobilis show stop ABC123
 ```
 
-Each command has its own page:
+## Pages
 
-- [Installation](installation.md) — how to get `mobilis` on your machine.
-- [`mobilis go`](go.md) — the passenger dashboard.
-- [`mobilis explore`](explore.md) — the GTFS analytics TUI.
+- [Installation](installation.md) — get `mobilis` running on your machine.
+- [`mobilis go`](go.md) — the interactive passenger TUI.
+- [`mobilis feeds`](feeds.md) — download and manage GTFS feeds.
 - [`mobilis show`](show.md) — Rich-formatted one-shot lookups.
+- [`mobilis explore`](explore.md) — GTFS analytics TUI *(planned)*.
 
-## Design goals
+## Design principles
 
-- **Keyboard-first.** Everything usable without leaving the terminal.
-- **Two audiences, one tool.** A clear split between passenger-facing
-  views (`go`) and analyst-facing views (`explore`).
-- **Standards-based.** Consumes GTFS Schedule and GTFS Realtime as-is,
-  without a custom intermediate format.
-- **Scriptable.** Anything visible in a TUI should also be reachable
-  through a one-shot `mobilis show ...` command suitable for piping.
+- **Keyboard-first.** The entire TUI is navigable without a mouse.
+- **Local-first.** Feeds are downloaded once into `~/.mobilis/feeds/` and queried locally with DuckDB — no remote server required after the initial download.
+- **Standards-based.** Consumes GTFS Schedule as-is; no custom intermediate format.
+- **Open catalog.** Feed discovery uses the open Mobility Database catalog bundled with the package.

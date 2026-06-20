@@ -1,45 +1,46 @@
 # mobilis
 
-> **Status:** early stub. This package currently only scaffolds the CLI/TUI
-> surface; GTFS data integration has not been implemented yet.
+> **v0.1 alpha** — the passenger TUI and feed-management CLI are functional. GTFS feeds are downloaded, imported into DuckDB, and browsable from the terminal.
 
-`mobilis` is a terminal-first tool for exploring public transportation information from [GTFS](https://gtfs.org/) feeds (both static schedules and real-time updates). It aims to give riders, operators and hackers a fast, keyboard-driven way to answer questions like _"when is the next bus at this stop?"_ or _"which vehicles are currently running on route 42?"_ — without
-leaving the terminal.
+`mobilis` is a terminal-first tool for exploring public transportation data from [GTFS](https://gtfs.org/) static schedule feeds. It lets riders, operators and developers browse transit schedules without leaving the terminal.
 
-It is built with:
+Built with:
 
-- [`rich`](https://github.com/Textualize/rich) for nicely formatted one-shot output (e.g. `mobilis show stop ABC123`).
-- [`textual`](https://github.com/Textualize/textual) for the interactive dashboards (`mobilis go`, `mobilis explore`).
-- [`duckdb`](https://duckdb.org/) as the embedded analytics engine for fast GTFS data querying.
-- [`uv`](https://github.com/astral-sh/uv) for packaging and environment management.
+- [`textual`](https://github.com/Textualize/textual) — interactive TUI dashboards.
+- [`rich`](https://github.com/Textualize/rich) — formatted one-shot CLI output.
+- [`duckdb`](https://duckdb.org/) — embedded analytics engine for fast GTFS queries.
+- [`uv`](https://github.com/astral-sh/uv) — packaging and environment management.
 
-## Planned commands
+## Commands
 
-```
-mobilis go                      # passenger TUI: live transit info for riders
-mobilis explore                 # analyst TUI: GTFS feed stats and export
-mobilis show stop ABC123        # show details for a stop by code/id
-```
+```bash
+# Passenger TUI — browse schedules for any GTFS feed
+mobilis go
+mobilis go mdb-466          # skip the feed selector, load feed directly
 
-More subcommands (routes, trips, vehicles, alerts, …) will follow.
+# Feed management
+mobilis feeds show          # list downloaded feeds + catalog
+mobilis feeds show -d       # downloaded feeds only
+mobilis feeds show -c       # catalog only
+mobilis feeds update mdb-466
+mobilis feeds remove mdb-466
 
-## Installation
-
-Once published to PyPI:
-
-```
-pip install mobilis
-# or
-uv tool install mobilis
+# One-shot output (Rich-formatted)
+mobilis show stop ABC123
 ```
 
-## Development
+## Quick start
 
-```
+```bash
+git clone https://github.com/simovilab/mobilis.git
+cd mobilis
 uv sync
-uv run mobilis --help
-uv build          # produce sdist + wheel in dist/
+uv run mobilis go
 ```
+
+## Documentation
+
+Full documentation is in [`docs/`](./docs/).
 
 ## License
 

@@ -2,40 +2,135 @@
         layout: vertical;
     }
 
-    #body {
+    #top-menu {
         height: 1fr;
     }
 
-    #sidebar {
-        width: 38;
-        border-right: solid $primary 50%;
+    #transit-layout {
+        height: 1fr;
         padding: 0 1;
     }
 
-    #content {
-        padding: 0 1;
+    #transit-search-panel {
+        height: auto;
+        margin-top: 1;
+    }
+
+    #feed-search-input {
+        width: 1fr;
+        margin-right: 1;
+    }
+
+    #search-feed-list {
+        margin-right: 1;
+    }
+
+    #refresh-feed-list {
+        margin-right: 1;
+    }
+
+    #transit-place-panel {
+        height: auto;
+        margin-top: 1;
+    }
+
+    #place-search-input {
+        width: 1fr;
+        margin-right: 1;
+    }
+
+    #search-place-list {
+        margin-right: 1;
+    }
+
+    #selected-place-label {
+        margin-top: 1;
+    }
+
+    #place-results-table {
+        height: 8;
+        margin-top: 1;
+    }
+
+    #selected-feed-label {
+        margin-top: 1;
+    }
+
+    #downloaded-feeds-table {
+        height: 10;
+        margin-top: 1;
+    }
+
+    #feed-catalog-table {
+        height: 1fr;
+        margin-top: 1;
     }
 
     .section-title {
-        padding: 1 0 0 0;
+        padding-top: 1;
         color: $accent;
         text-style: bold;
     }
 
-    StopsTable, DeparturesTable {
+    #route-layout, #stop-layout {
         height: 1fr;
     }
 
-    ProgressBar {
-        margin: 1 0;
+    #route-col-1 {
+        width: 42;
+        border-right: solid $primary 50%;
+        padding: 0 1;
     }
 
-    Sparkline {
-        height: 3;
-        margin: 1 0;
+    #route-search-panel {
+        height: 12;
+        border-bottom: solid $surface-lighten-1;
     }
 
-    RichLog {
+    #route-list-panel {
         height: 1fr;
-        background: $surface;
+    }
+
+    #route-col-2 {
+        width: 46;
+        border-right: solid $primary 50%;
+        padding: 0 1;
+    }
+
+    #trips-dir-0-panel, #trips-dir-1-panel {
+        height: 1fr;
+    }
+
+    #route-col-3 {
+        width: 1fr;
+        padding: 0 1;
+    }
+
+    #stop-col-1 {
+        width: 40;
+        border-right: solid $primary 50%;
+        padding: 0 1;
+    }
+
+    #stop-col-2 {
+        width: 1fr;
+        border-right: solid $primary 50%;
+        padding: 0 1;
+    }
+
+    #stop-col-3 {
+        width: 1fr;
+        padding: 0 1;
+    }
+
+    Input, Select {
+        margin-top: 1;
+    }
+
+    #apply-route-filters {
+        margin-top: 1;
+    }
+
+    DataTable {
+        height: 1fr;
     }
