@@ -1,5 +1,7 @@
 import os
+
 import duckdb
+
 from .required import REQUIRED_FIELDS
 
 OPTIONAL_SERVICE_TABLES = {"calendar", "calendar_dates"}
@@ -25,6 +27,64 @@ def import_gtfs(feed_id: str):
 
     with duckdb.connect(f"{feed_path}/{feed_id}.duckdb") as d:
         d.execute("INSTALL spatial; LOAD spatial;")
+
+        # Feed info
+        if "feed_info.txt" in os.listdir(files_path):
+            csv_path = os.path.join(files_path, "feed_info.txt")
+            rows = d.execute(
+                "DESCRIBE SELECT * FROM read_csv_auto(?, header=true)",
+                [csv_path],
+            ).fetchall()
+            feed_info_actual_fields = {row[0] for row in rows}
+            feed_info_required_fields = {
+                "feed_publisher_name",
+                "feed_publisher_url",
+                "feed_lang",
+            }
+            if feed_info_required_fields.issubset(feed_info_actual_fields):
+                start_date_expr = (
+                    "CAST(strptime(NULLIF(CAST(feed_start_date AS VARCHAR), ''), '%Y%m%d') AS DATE)"
+                    if "feed_start_date" in feed_info_actual_fields
+                    else "CAST(NULL AS DATE)"
+                )
+                end_date_expr = (
+                    "CAST(strptime(NULLIF(CAST(feed_end_date AS VARCHAR), ''), '%Y%m%d') AS DATE)"
+                    if "feed_end_date" in feed_info_actual_fields
+                    else "CAST(NULL AS DATE)"
+                )
+                version_expr = (
+                    "CAST(feed_version AS VARCHAR)"
+                    if "feed_version" in feed_info_actual_fields
+                    else "CAST(NULL AS VARCHAR)"
+                )
+                contact_email_expr = (
+                    "CAST(feed_contact_email AS VARCHAR)"
+                    if "feed_contact_email" in feed_info_actual_fields
+                    else "CAST(NULL AS VARCHAR)"
+                )
+                contact_url_expr = (
+                    "CAST(feed_contact_url AS VARCHAR)"
+                    if "feed_contact_url" in feed_info_actual_fields
+                    else "CAST(NULL AS VARCHAR)"
+                )
+                d.sql(f"""
+                    CREATE OR REPLACE TABLE feed_info AS
+                    SELECT
+                        CAST(feed_publisher_name AS VARCHAR) AS feed_publisher_name,
+                        CAST(feed_publisher_url AS VARCHAR) AS feed_publisher_url,
+                        CAST(feed_lang AS VARCHAR) AS feed_lang,
+                        {start_date_expr} AS feed_start_date,
+                        {end_date_expr} AS feed_end_date,
+                        {version_expr} AS feed_version,
+                        {contact_email_expr} AS feed_contact_email,
+                        {contact_url_expr} AS feed_contact_url
+                    FROM read_csv('{files_path}/feed_info.txt');
+                    """)
+            else:
+                missing_fields = feed_info_required_fields - feed_info_actual_fields
+                raise ValueError(
+                    f"Feed {feed_id} is missing required fields in feed_info.txt: {', '.join(missing_fields)}"
+                )
 
         # Agency
         agency_required_fields = set(REQUIRED_FIELDS["agency"])

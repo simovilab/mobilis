@@ -32,7 +32,12 @@ from textual.widgets import (
 )
 
 from .import_gtfs import import_gtfs
-from .tabs import TransitSystemTabContent, TripsByRouteTabContent, TripsByStopTabContent
+from .tabs import (
+    FeedInfoTabContent,
+    TransitSystemTabContent,
+    TripsByRouteTabContent,
+    TripsByStopTabContent,
+)
 
 TODAY_ISO = date.today().isoformat()
 PERSISTENT_NOTIFICATION_TIMEOUT = 3600.0
@@ -63,6 +68,10 @@ class MobilisGoApp(App):
     place_search_rows: list[tuple[str, str, float, float]] = []
     selected_place_row_id: str | None = None
 
+    def __init__(self, initial_feed_id: str | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._initial_feed_id = initial_feed_id
+
     def _notify_warning(self, message: str) -> None:
         self.notify(
             message,
@@ -82,6 +91,8 @@ class MobilisGoApp(App):
         with TabbedContent(initial="transit-system", id="top-menu"):
             with TabPane("Transit System", id="transit-system"):
                 yield TransitSystemTabContent(id="transit-layout")
+            with TabPane("Feed info", id="feed-info"):
+                yield FeedInfoTabContent(id="feed-info-layout")
             with TabPane("Trips by route", id="trips-by-route"):
                 yield TripsByRouteTabContent(id="route-layout")
             with TabPane("Trips by stop", id="trips-by-stop"):
@@ -100,6 +111,20 @@ class MobilisGoApp(App):
         self.query_one("#active-date-input", Input).value = TODAY_ISO
         self._load_downloaded_feeds()
         self._load_feed_catalog()
+        if self._initial_feed_id:
+            self.call_after_refresh(self._load_initial_feed, self._initial_feed_id)
+
+    def _load_initial_feed(self, feed_id: str) -> None:
+        db_path = Path.home() / ".mobilis" / "feeds" / feed_id / f"{feed_id}.duckdb"
+        if db_path.exists():
+            self._use_loaded_feed(feed_id)
+            self.query_one("#top-menu", TabbedContent).active = "trips-by-route"
+        elif feed_id in self.feed_catalog_urls:
+            self._download_and_prepare_feed(feed_id)
+        else:
+            self._notify_error(
+                f"Feed '{feed_id}' is not downloaded and was not found in the catalog."
+            )
 
     def on_unmount(self) -> None:
         if self.db is not None:
@@ -111,6 +136,8 @@ class MobilisGoApp(App):
             self.query_one("#place-results-table", DataTable),
             self.query_one("#downloaded-feeds-table", DataTable),
             self.query_one("#feed-catalog-table", DataTable),
+            self.query_one("#feed-info-table", DataTable),
+            self.query_one("#feed-stats-table", DataTable),
             self.query_one("#routes-table", DataTable),
             self.query_one("#trips-dir-0-table", DataTable),
             self.query_one("#trips-dir-1-table", DataTable),
@@ -130,6 +157,8 @@ class MobilisGoApp(App):
         self.query_one("#feed-catalog-table", DataTable).add_columns(
             "Feed ID", "Provider", "Feed name"
         )
+        self.query_one("#feed-info-table", DataTable).add_columns("Field", "Value")
+        self.query_one("#feed-stats-table", DataTable).add_columns("Metric", "Value")
         self.query_one("#routes-table", DataTable).add_columns("Route ID", "Route name")
         self.query_one("#trips-dir-0-table", DataTable).add_columns(
             "Departure", "From", "To"
@@ -148,6 +177,7 @@ class MobilisGoApp(App):
         self.sub_title = f"Feed: {feed_id}"
         if not self._connect_feed(feed_id):
             return
+        self._load_feed_info()
         self._load_agencies()
         self._load_route_select_options()
         self._refresh_routes_by_selected_agency()
@@ -322,6 +352,75 @@ class MobilisGoApp(App):
             for feed_id, provider, feed_name, hosted_url in rows
         ]
         self._render_feed_catalog(self.feed_catalog_rows)
+
+    def _load_feed_info(self) -> None:
+        info_table = self.query_one("#feed-info-table", DataTable)
+        stats_table = self.query_one("#feed-stats-table", DataTable)
+        info_table.clear()
+        stats_table.clear()
+
+        if self.db is None:
+            info_table.add_row("[dim]no feed loaded[/dim]", "")
+            return
+
+        table_names = {
+            row[0] for row in self.db.execute("SHOW TABLES").fetchall()
+        }
+        if "feed_info" not in table_names:
+            info_table.add_row("[dim]feed_info.txt not available[/dim]", "")
+        else:
+            row = self.db.execute(
+                """
+                SELECT
+                    COALESCE(feed_publisher_name, ''),
+                    COALESCE(feed_publisher_url, ''),
+                    COALESCE(feed_lang, ''),
+                    COALESCE(CAST(feed_start_date AS VARCHAR), ''),
+                    COALESCE(CAST(feed_end_date AS VARCHAR), ''),
+                    COALESCE(feed_version, ''),
+                    COALESCE(feed_contact_email, ''),
+                    COALESCE(feed_contact_url, '')
+                FROM feed_info
+                LIMIT 1
+                """
+            ).fetchone()
+            if row:
+                fields = [
+                    ("feed_publisher_name", row[0]),
+                    ("feed_publisher_url", row[1]),
+                    ("feed_lang", row[2]),
+                    ("feed_start_date", row[3]),
+                    ("feed_end_date", row[4]),
+                    ("feed_version", row[5]),
+                    ("feed_contact_email", row[6]),
+                    ("feed_contact_url", row[7]),
+                ]
+                for field, value in fields:
+                    info_table.add_row(field, value or "[dim]–[/dim]")
+            else:
+                info_table.add_row("[dim]feed_info.txt empty[/dim]", "")
+
+        route_count = self._query("SELECT COUNT(*) FROM routes")
+        stop_count = self._query("SELECT COUNT(*) FROM stops")
+        stop_columns = set()
+        if self.db is not None:
+            stop_columns = {
+                row[1] for row in self.db.execute("PRAGMA table_info('stops')").fetchall()
+            }
+        if "location_type" in stop_columns:
+            station_count = self._query(
+                """
+                SELECT COUNT(*)
+                FROM stops
+                WHERE COALESCE(CAST(location_type AS INTEGER), 0) = 1
+                """
+            )
+            station_value = str(station_count[0][0] if station_count else 0)
+        else:
+            station_value = "[dim]not available[/dim]"
+        stats_table.add_row("Routes", str(route_count[0][0] if route_count else 0))
+        stats_table.add_row("Stops", str(stop_count[0][0] if stop_count else 0))
+        stats_table.add_row("Stations", station_value)
 
     def _fuzzy_score(self, query: str, provider: str, feed_name: str) -> float:
         query_norm = query.strip().lower()
@@ -910,10 +1009,11 @@ class MobilisGoApp(App):
         self._load_downloaded_feeds()
         self._load_feed_catalog()
         if self.selected_feed:
+            self._load_feed_info()
             self._refresh_routes_by_selected_agency()
             self._refresh_stops_by_selected_route()
 
 
-def run_mobilis_go() -> None:
+def run_mobilis_go(initial_feed_id: str | None = None) -> None:
     """Entry point used by the CLI to launch the TUI."""
-    MobilisGoApp().run()
+    MobilisGoApp(initial_feed_id=initial_feed_id).run()

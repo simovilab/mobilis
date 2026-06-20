@@ -1,15 +1,13 @@
 """Command-line interface for mobilis.
 
-Exposes three top-level commands:
+Exposes four top-level commands:
 
 * ``mobilis go`` — launch the passenger-facing Textual TUI dashboard.
 * ``mobilis explore`` — launch the analyst/researcher TUI for inspecting
   and exporting GTFS feed data.
+* ``mobilis feeds <subcommand>`` — manage GTFS feeds (show / remove / update).
 * ``mobilis show <resource> <id>`` — print information about a transit
   resource (currently only ``stop``) using Rich for pretty output.
-
-This is a minimal stub; real GTFS data fetching will arrive in a future
-release.
 """
 
 from __future__ import annotations
@@ -39,12 +37,22 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # mobilis go — passenger-facing TUI
-    subparsers.add_parser(
+    go_parser = subparsers.add_parser(
         "go",
         help="Start the passenger TUI dashboard.",
         description=(
             "Start the mobilis passenger TUI dashboard (powered by Textual) "
-            "with live transit information for riders."
+            "with live transit information for riders. Optionally pass a "
+            "feed ID to load it immediately on startup."
+        ),
+    )
+    go_parser.add_argument(
+        "feed_id",
+        nargs="?",
+        default=None,
+        help=(
+            "Feed ID to load on startup, e.g. mdb-466. "
+            "If not downloaded yet, it will be downloaded automatically."
         ),
     )
 
@@ -58,6 +66,53 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # mobilis feeds <show|remove|update>
+    feeds = subparsers.add_parser(
+        "feeds",
+        help="Manage downloaded GTFS feeds.",
+        description="List, remove, or update downloaded GTFS feeds.",
+    )
+    feeds_sub = feeds.add_subparsers(dest="feeds_action", required=True)
+
+    feeds_show = feeds_sub.add_parser(
+        "show",
+        help="List downloaded feeds and/or the feed catalog.",
+        description=(
+            "Show downloaded GTFS feeds in ~/.mobilis/feeds/ and a summary "
+            "of the full feed catalog. Without flags both sections are shown."
+        ),
+    )
+    feeds_show_group = feeds_show.add_mutually_exclusive_group()
+    feeds_show_group.add_argument(
+        "-d",
+        "--downloaded",
+        action="store_true",
+        help="Show only the downloaded feeds.",
+    )
+    feeds_show_group.add_argument(
+        "-c",
+        "--catalog",
+        action="store_true",
+        help="Show only the feed catalog.",
+    )
+
+    feeds_remove = feeds_sub.add_parser(
+        "remove",
+        help="Remove a downloaded feed.",
+        description="Delete the local directory for a downloaded feed.",
+    )
+    feeds_remove.add_argument("feed_id", help="Feed ID to remove, e.g. mdb-53.")
+
+    feeds_update = feeds_sub.add_parser(
+        "update",
+        help="Re-download and re-import a feed.",
+        description=(
+            "Re-download the latest GTFS ZIP from the Mobility Database catalog "
+            "and rebuild the DuckDB database for the given feed."
+        ),
+    )
+    feeds_update.add_argument("feed_id", help="Feed ID to update, e.g. mdb-53.")
+
     # mobilis show <resource> <id>
     show = subparsers.add_parser(
         "show",
@@ -65,15 +120,6 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Show information about a transit resource.",
     )
     show_sub = show.add_subparsers(dest="resource", required=True)
-
-    show_sub.add_parser(
-        "feeds",
-        help="List downloaded feeds and the feed catalog.",
-        description=(
-            "Show downloaded GTFS feeds in ~/.mobilis/feeds/ and a summary "
-            "of the full feed catalog from src/feeds/feeds.duckdb."
-        ),
-    )
 
     stop = show_sub.add_parser(
         "stop",
@@ -92,7 +138,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "go":
         from .go import run_mobilis_go
 
-        run_mobilis_go()
+        run_mobilis_go(initial_feed_id=args.feed_id)
         return 0
 
     if args.command == "explore":
@@ -101,10 +147,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         run_mobilis_explore()
         return 0
 
-    if args.command == "show" and args.resource == "feeds":
-        from .show import show_feeds
+    if args.command == "feeds":
+        from .feeds_cmd import cmd_feeds_remove, cmd_feeds_show, cmd_feeds_update
 
-        show_feeds()
+        if args.feeds_action == "show":
+            cmd_feeds_show(downloaded_only=args.downloaded, catalog_only=args.catalog)
+        elif args.feeds_action == "remove":
+            cmd_feeds_remove(args.feed_id)
+        elif args.feeds_action == "update":
+            cmd_feeds_update(args.feed_id)
         return 0
 
     if args.command == "show" and args.resource == "stop":
