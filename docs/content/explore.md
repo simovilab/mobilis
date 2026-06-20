@@ -2,58 +2,54 @@
 icon: lucide/scan-search
 ---
 
-# Explore
+# mobilis explore
 
-`mobilis explore` launches the **analyst TUI**: a companion to [`mobilis go`](go.md) aimed at researchers, operators and data engineers who want to inspect, summarize and export GTFS feeds.
+`mobilis explore` will launch an **analyst TUI** aimed at researchers, operators and data engineers who need to inspect, summarise and export GTFS feeds in depth.
 
 ```bash
 mobilis explore
 ```
 
-!!! warning "Status: stub"
-    The current screen ships placeholder stats and a mock tables list.
-    No GTFS file is actually parsed yet.
+!!! warning "Status: planned"
+    `mobilis explore` is a stub in v0.1. The command starts but shows no real data. Development will begin after the passenger TUI (`mobilis go`) stabilises.
+
+---
 
 ## Planned features
 
 ### Feed sources
 
-* Open a local GTFS `.zip` or extracted directory.
-* Open a remote feed by URL (static schedule and/or GTFS-RT).
-* Open a curated transit catalog entry by agency/feed id.
+- Open a local GTFS `.zip` or extracted directory.
+- Open a remote feed by URL.
+- Load any feed already imported by `mobilis feeds`.
 
 ### Summary tab
 
-* High-level counts: agencies, routes, stops, trips, stop times.
-* Service calendar coverage (start/end dates, active weekdays).
-* Spatial bounding box and centroid of the network.
-* Feed validation summary (warnings and errors).
+- High-level counts: agencies, routes, stops, trips, stop times.
+- Service calendar coverage (start/end dates, active weekdays).
+- Spatial bounding box and centroid of the network.
 
 ### Tables tab
 
-* Browsable list of every file in the feed (`agency.txt`,
-  `stops.txt`, `routes.txt`, …) with row counts.
-* Per-table data grid with column filtering and sorting.
-* Quick schema view: columns, types, nullability, sample values.
+- Browsable list of every file in the feed with row counts.
+- Per-table data grid with column filtering and sorting.
+- Quick schema view: column names, types and sample values.
 
 ### Export tab
 
-* Export the active view, selection or whole table to:
-    * CSV
-    * Parquet
-    * GeoJSON (for stops, shapes and derived layers)
-* Save reproducible "exports" as named recipes in the project.
-### Keybindings
+- Export any table or selection to CSV, Parquet or GeoJSON.
 
-* ++q++ — quit.
-* ++o++ — open a feed.
-* ++e++ — export current view.
+### Keybindings (planned)
 
-Fuzzy-find (++ctrl+p++), jump-to-table and per-column filter bindings
-will be added as the underlying features land.
+| Key | Action |
+|-----|--------|
+| ++q++ | Quit |
+| ++o++ | Open a feed |
+| ++e++ | Export current view |
+
+---
 
 ## Non-goals
 
-* Editing GTFS feeds. `mobilis explore` is read-only by design.
-* Being a routing engine. Use a dedicated tool (OpenTripPlanner, OSRM,
-  Valhalla, ...) if you need itineraries.
+- **Editing feeds.** `mobilis explore` is read-only by design.
+- **Routing.** For itinerary planning use a dedicated engine (OpenTripPlanner, Valhalla, …).

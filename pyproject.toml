@@ -1,6 +1,6 @@
 [project]
 name = "mobilis"
-version = "0.0.1"
+version = "0.1.0"
 description = "Visualize public transportation information from GTFS feeds in the terminal."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,7 +17,7 @@ keywords = [
     "terminal",
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",

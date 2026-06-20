@@ -274,7 +274,7 @@ class MobilisGoApp(App):
             return []
 
     def _metadata_db_path(self) -> Path:
-        return Path(__file__).resolve().parents[1] / "feeds" / "feeds.duckdb"
+        return Path(__file__).resolve().parent / "data" / "feeds.duckdb"
 
     def _query_catalog(self, query: str, params: Sequence[object] = ()) -> list[tuple]:
         metadata_db_path = self._metadata_db_path()

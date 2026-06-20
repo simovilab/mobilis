@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-CATALOG_PATH = Path(__file__).parent.parent / "feeds" / "feeds.duckdb"
+CATALOG_PATH = Path(__file__).parent / "data" / "feeds.duckdb"
 FEEDS_DIR = Path.home() / ".mobilis" / "feeds"
 
 

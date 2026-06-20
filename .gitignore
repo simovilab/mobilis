@@ -1,6 +1,8 @@
 # DuckDB
 *.duckdb
 *.duckdb.wal
+# ...except the feed catalog that ships inside the package
+!src/mobilis/data/feeds.duckdb
 
 # Zensical stuff
 site/

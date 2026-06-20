@@ -11,7 +11,7 @@ from rich.console import Console
 
 from .show import _print_catalog, _print_downloaded
 
-CATALOG_PATH = Path(__file__).parent.parent / "feeds" / "feeds.duckdb"
+CATALOG_PATH = Path(__file__).parent / "data" / "feeds.duckdb"
 FEEDS_DIR = Path.home() / ".mobilis" / "feeds"
 
 
