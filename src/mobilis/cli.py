@@ -66,6 +66,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     show_sub = show.add_subparsers(dest="resource", required=True)
 
+    show_sub.add_parser(
+        "feeds",
+        help="List downloaded feeds and the feed catalog.",
+        description=(
+            "Show downloaded GTFS feeds in ~/.mobilis/feeds/ and a summary "
+            "of the full feed catalog from src/feeds/feeds.duckdb."
+        ),
+    )
+
     stop = show_sub.add_parser(
         "stop",
         help="Show information about a stop.",
@@ -90,6 +99,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         from .explore import run_mobilis_explore
 
         run_mobilis_explore()
+        return 0
+
+    if args.command == "show" and args.resource == "feeds":
+        from .show import show_feeds
+
+        show_feeds()
         return 0
 
     if args.command == "show" and args.resource == "stop":
